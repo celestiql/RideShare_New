@@ -1,0 +1,6 @@
+{
+  "name": "Campus Rideshare",
+  "description": "A campus rideshare platform for university students to schedule, match rides, and split fares.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

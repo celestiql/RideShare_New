@@ -1,0 +1,30 @@
+{
+  "name": "workspace",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {
+    "dev": "npm run dev --workspace=@workspace/api-server",
+    "build": "npm run typecheck:libs && npm run build --workspace=@workspace/campus-rideshare && npm run build --workspace=@workspace/api-server",
+    "start": "npm run start --workspace=@workspace/api-server",
+    "typecheck:libs": "tsc --build",
+    "typecheck": "npm run typecheck:libs && npm run typecheck --workspace=@workspace/api-server && npm run typecheck --workspace=@workspace/campus-rideshare"
+  },
+  "workspaces": [
+    "artifacts/*",
+    "lib/*",
+    "lib/integrations/*",
+    "scripts"
+  ],
+  "private": true,
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@replit/connectors-sdk": "^0.4.1"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.6",
+    "typescript": "~5.9.3"
+  },
+  "overrides": {
+    "esbuild": "0.27.3"
+  }
+}

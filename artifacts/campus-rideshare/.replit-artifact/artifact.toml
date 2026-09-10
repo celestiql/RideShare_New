@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Campus Rideshare"
+description = "A student-focused campus rideshare app for finding compatible riders, creating recurring commute schedules, sharing fare costs, and managing ride history."
+version = "1.0.0"
+id = "artifacts/campus-rideshare"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20275
+
+[services.development]
+run = "pnpm --filter @workspace/campus-rideshare run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/campus-rideshare", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/campus-rideshare/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20275"
+BASE_PATH = "/"

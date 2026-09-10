@@ -1,0 +1,1 @@
+- [OpenAPI date boundary](openapi-date-boundary.md) — keep ride calendar days as database strings and normalize them at the generated API boundary.

@@ -1,0 +1,709 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Campus rideshare API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Student authentication
+  - name: dashboard
+    description: Dashboard and suggested rides
+  - name: rides
+    description: Ride requests and groups
+  - name: recurring
+    description: Recurring schedules
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /auth/register:
+    post:
+      operationId: registerStudent
+      tags: [auth]
+      summary: Register a student
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StudentRegisterInput"
+      responses:
+        "201":
+          description: Registered student
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /auth/login:
+    post:
+      operationId: loginStudent
+      tags: [auth]
+      summary: Log in with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Logged in student
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /auth/logout:
+    post:
+      operationId: logoutStudent
+      tags: [auth]
+      summary: Log out the current student
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+  /auth/me:
+    get:
+      operationId: getCurrentStudent
+      tags: [auth]
+      summary: Get the current student
+      responses:
+        "200":
+          description: Current student
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Student"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Get the dashboard summary
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /students/available:
+    get:
+      operationId: getAvailableStudents
+      tags: [dashboard]
+      summary: List students available for a manual group
+      responses:
+        "200":
+          description: Available students
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Student"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /ride-requests:
+    get:
+      operationId: getRideRequests
+      tags: [rides]
+      summary: List the current student's ride requests
+      responses:
+        "200":
+          description: Ride requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RideRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createRideRequest
+      tags: [rides]
+      summary: Create a ride request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RideRequestInput"
+      responses:
+        "201":
+          description: Created ride request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RideRequest"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /ride-requests/{requestId}:
+    get:
+      operationId: getRideRequest
+      tags: [rides]
+      summary: Get one ride request
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+      responses:
+        "200":
+          description: Ride request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RideRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateRideRequest
+      tags: [rides]
+      summary: Update a ride request
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RideRequestUpdate"
+      responses:
+        "200":
+          description: Updated ride request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RideRequest"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: cancelRideRequest
+      tags: [rides]
+      summary: Cancel a ride request
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+      responses:
+        "200":
+          description: Cancelled ride request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /ride-groups:
+    get:
+      operationId: getRideGroups
+      tags: [rides]
+      summary: List the current student's matched groups
+      responses:
+        "200":
+          description: Matched groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RideGroup"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /ride-groups/{groupId}:
+    get:
+      operationId: getRideGroup
+      tags: [rides]
+      summary: Get group details
+      parameters:
+        - $ref: "#/components/parameters/GroupId"
+      responses:
+        "200":
+          description: Ride group details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RideGroupDetails"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /ride-groups/{groupId}/complete:
+    post:
+      operationId: completeRideGroup
+      tags: [rides]
+      summary: Mark a group as completed
+      parameters:
+        - $ref: "#/components/parameters/GroupId"
+      responses:
+        "200":
+          description: Completed group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RideGroup"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /ride-groups/{groupId}/nudge:
+    post:
+      operationId: nudgeFarePayer
+      tags: [rides]
+      summary: Send an in-app fare reminder to another group member
+      parameters:
+        - $ref: "#/components/parameters/GroupId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NudgeInput"
+      responses:
+        "200":
+          description: Fare reminder sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /ride-groups/{groupId}/noshow:
+    post:
+      operationId: flagNoShow
+      tags: [rides]
+      summary: Mark a rider as a no-show
+      parameters:
+        - $ref: "#/components/parameters/GroupId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NoShowInput"
+      responses:
+        "200":
+          description: No-show recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /ride-groups/{groupId}/ratings:
+    post:
+      operationId: rateRider
+      tags: [rides]
+      summary: Rate another rider after a completed ride
+      parameters:
+        - $ref: "#/components/parameters/GroupId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RatingInput"
+      responses:
+        "201":
+          description: Rating saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /recurring-schedules:
+    get:
+      operationId: getRecurringSchedules
+      tags: [recurring]
+      summary: List recurring schedules
+      responses:
+        "200":
+          description: Recurring schedules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RecurringSchedule"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createRecurringSchedule
+      tags: [recurring]
+      summary: Create a recurring schedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecurringScheduleInput"
+      responses:
+        "201":
+          description: Created recurring schedule
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecurringSchedule"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /recurring-schedules/{scheduleId}:
+    patch:
+      operationId: updateRecurringSchedule
+      tags: [recurring]
+      summary: Update a recurring schedule
+      parameters:
+        - $ref: "#/components/parameters/ScheduleId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecurringScheduleInput"
+      responses:
+        "200":
+          description: Updated recurring schedule
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecurringSchedule"
+    delete:
+      operationId: deleteRecurringSchedule
+      tags: [recurring]
+      summary: Delete a recurring schedule
+      parameters:
+        - $ref: "#/components/parameters/ScheduleId"
+      responses:
+        "200":
+          description: Deleted recurring schedule
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    Student:
+      type: object
+      required: [id, studentId, name, email, gender, upiPaymentLink, coRiderPreference, ratingAverage, ratingCount, noShowCount]
+      properties:
+        id: { type: integer }
+        studentId: { type: string }
+        name: { type: string }
+        email: { type: string, format: email }
+        gender:
+          $ref: "#/components/schemas/Gender"
+        upiPaymentLink: { type: ["string", "null"], format: uri }
+        coRiderPreference:
+          $ref: "#/components/schemas/CoRiderPreference"
+        ratingAverage: { type: number }
+        ratingCount: { type: integer }
+        noShowCount: { type: integer }
+    StudentRegisterInput:
+      type: object
+      required: [studentId, name, email, password, gender, coRiderPreference]
+      properties:
+        studentId: { type: string, minLength: 2 }
+        name: { type: string, minLength: 2 }
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+        gender:
+          $ref: "#/components/schemas/Gender"
+        upiPaymentLink: { type: ["string", "null"], format: uri }
+        coRiderPreference:
+          $ref: "#/components/schemas/CoRiderPreference"
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 1 }
+    AuthResponse:
+      type: object
+      required: [student]
+      properties:
+        student:
+          $ref: "#/components/schemas/Student"
+    CoRiderPreference:
+      type: string
+      enum: [any, same-gender-only]
+    Gender:
+      type: string
+      enum: [woman, man, non-binary, prefer-not-to-say]
+    TimeSlot:
+      type: string
+      enum: [06:00, 07:00, 08:00, 09:00, 10:00, 11:00, 12:00, 13:00, 14:00, 15:00, 16:00, 17:00, 18:00, 19:00]
+    Landmark:
+      type: string
+      enum: [north-gate, library-circle, hostel-block-a, main-market, east-gate]
+    GroupCreationMode:
+      type: string
+      enum: [automatic, manual]
+    RideRequestStatus:
+      type: string
+      enum: [pending, matched, completed, cancelled]
+    RideRequestInput:
+      type: object
+      required: [date, timeSlot, landmark, coRiderPreference, creationMode]
+      properties:
+        date: { type: string, format: date }
+        timeSlot:
+          $ref: "#/components/schemas/TimeSlot"
+        landmark:
+          $ref: "#/components/schemas/Landmark"
+        coRiderPreference:
+          $ref: "#/components/schemas/CoRiderPreference"
+        creationMode:
+          $ref: "#/components/schemas/GroupCreationMode"
+        selectedStudentIds:
+          type: array
+          items: { type: integer }
+    RideRequestUpdate:
+      type: object
+      required: [date, timeSlot, landmark, coRiderPreference]
+      properties:
+        date: { type: string, format: date }
+        timeSlot:
+          $ref: "#/components/schemas/TimeSlot"
+        landmark:
+          $ref: "#/components/schemas/Landmark"
+        coRiderPreference:
+          $ref: "#/components/schemas/CoRiderPreference"
+    RideRequest:
+      type: object
+      required: [id, date, timeSlot, landmark, coRiderPreference, creationMode, status, groupId, createdAt]
+      properties:
+        id: { type: integer }
+        date: { type: string, format: date }
+        timeSlot:
+          $ref: "#/components/schemas/TimeSlot"
+        landmark:
+          $ref: "#/components/schemas/Landmark"
+        coRiderPreference:
+          $ref: "#/components/schemas/CoRiderPreference"
+        creationMode:
+          $ref: "#/components/schemas/GroupCreationMode"
+        status:
+          $ref: "#/components/schemas/RideRequestStatus"
+        groupId: { type: ["integer", "null"] }
+        createdAt: { type: string, format: date-time }
+    RecurringScheduleInput:
+      type: object
+      required: [daysOfWeek, landmark, timeSlot, coRiderPreference]
+      properties:
+        daysOfWeek:
+          type: array
+          minItems: 1
+          items: { type: integer, minimum: 0, maximum: 6 }
+        landmark:
+          $ref: "#/components/schemas/Landmark"
+        timeSlot:
+          $ref: "#/components/schemas/TimeSlot"
+        coRiderPreference:
+          $ref: "#/components/schemas/CoRiderPreference"
+    RecurringSchedule:
+      type: object
+      required: [id, daysOfWeek, landmark, timeSlot, coRiderPreference]
+      properties:
+        id: { type: integer }
+        daysOfWeek:
+          type: array
+          items: { type: integer, minimum: 0, maximum: 6 }
+        landmark:
+          $ref: "#/components/schemas/Landmark"
+        timeSlot:
+          $ref: "#/components/schemas/TimeSlot"
+        coRiderPreference:
+          $ref: "#/components/schemas/CoRiderPreference"
+    RideGroupMember:
+      type: object
+      required: [id, studentId, name, landmark, coRiderPreference, ratingAverage, noShowCount, upiPaymentLink, fareNudgeSentAt]
+      properties:
+        id: { type: integer }
+        studentId: { type: string }
+        name: { type: string }
+        landmark:
+          $ref: "#/components/schemas/Landmark"
+        coRiderPreference:
+          $ref: "#/components/schemas/CoRiderPreference"
+        ratingAverage: { type: number }
+        noShowCount: { type: integer }
+        upiPaymentLink: { type: ["string", "null"], format: uri }
+        fareNudgeSentAt: { type: ["string", "null"], format: date-time }
+    FareBreakdown:
+      type: object
+      required: [vehicleType, totalFare, farePerHead]
+      properties:
+        vehicleType:
+          type: string
+          enum: [auto, cab]
+        totalFare: { type: integer }
+        farePerHead: { type: integer }
+    RideGroup:
+      type: object
+      required: [id, date, timeSlot, landmark, landmarks, matchType, memberCount, status, vehicleType, totalFare, farePerHead, reminderVisible]
+      properties:
+        id: { type: integer }
+        date: { type: string, format: date }
+        timeSlot:
+          $ref: "#/components/schemas/TimeSlot"
+        landmark:
+          $ref: "#/components/schemas/Landmark"
+        landmarks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Landmark"
+        matchType:
+          type: string
+          enum: [exact, nearby]
+        memberCount: { type: integer }
+        status:
+          type: string
+          enum: [upcoming, completed]
+        vehicleType:
+          type: string
+          enum: [auto, cab]
+        totalFare: { type: integer }
+        farePerHead: { type: integer }
+        reminderVisible: { type: boolean }
+    RideGroupDetails:
+      allOf:
+        - $ref: "#/components/schemas/RideGroup"
+        - type: object
+          required: [members]
+          properties:
+            members:
+              type: array
+              items:
+                $ref: "#/components/schemas/RideGroupMember"
+    Dashboard:
+      type: object
+      required: [student, upcomingGroups, completedGroups, pendingRequests, recurringSchedules, suggestedRide, fareNudges]
+      properties:
+        student:
+          $ref: "#/components/schemas/Student"
+        upcomingGroups:
+          type: array
+          items:
+            $ref: "#/components/schemas/RideGroup"
+        completedGroups:
+          type: array
+          items:
+            $ref: "#/components/schemas/RideGroup"
+        pendingRequests:
+          type: array
+          items:
+            $ref: "#/components/schemas/RideRequest"
+        recurringSchedules:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecurringSchedule"
+        suggestedRide:
+          allOf:
+            - $ref: "#/components/schemas/RideRequestInput"
+            - type: object
+              required: [label]
+              properties:
+                label: { type: string }
+        fareNudges:
+          type: array
+          items:
+            $ref: "#/components/schemas/FareNudge"
+    NoShowInput:
+      type: object
+      required: [studentId]
+      properties:
+        studentId: { type: integer }
+    NudgeInput:
+      type: object
+      required: [studentId]
+      properties:
+        studentId: { type: integer }
+    FareNudge:
+      type: object
+      required: [id, groupId, senderName, date, farePerHead, createdAt]
+      properties:
+        id: { type: integer }
+        groupId: { type: integer }
+        senderName: { type: string }
+        date: { type: string, format: date }
+        farePerHead: { type: integer }
+        createdAt: { type: string, format: date-time }
+    RatingInput:
+      type: object
+      required: [studentId, rating]
+      properties:
+        studentId: { type: integer }
+        rating: { type: integer, minimum: 1, maximum: 5 }
+    MessageResponse:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string }
+  parameters:
+    RequestId:
+      name: requestId
+      in: path
+      required: true
+      schema: { type: integer }
+    GroupId:
+      name: groupId
+      in: path
+      required: true
+      schema: { type: integer }
+    ScheduleId:
+      name: scheduleId
+      in: path
+      required: true
+      schema: { type: integer }
+  responses:
+    BadRequest:
+      description: Invalid input
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/MessageResponse"
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/MessageResponse"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/MessageResponse"
+
